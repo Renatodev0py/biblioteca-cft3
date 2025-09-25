@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Biblioteca Virtual Profesional</title>
+  <style>
+   
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f0ff 0%, #ffffff 100%);
+      color: #1a2a6c;
+      margin: 0;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    main {
+      background: #fff;
+      max-width: 700px;
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    h1 {
+      font-weight: 700;
+      font-size: 2.4rem;
+      text-align: center;
+      color: #004080;
+      margin: 0 0 10px;
+      user-select: none;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+      color: #003366;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #b0c4de;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #004080;
+      box-shadow: 0 0 6px #80aaff;
+    }
+    button {
+      background-color: #0066cc;
+      color: white;
+      font-weight: 700;
+      border: none;
+      padding: 14px 20px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      width: 100%;
+      margin-top: 12px;
+      user-select: none;
+    }
+    button:disabled {
+      background-color: #aac6ff;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background-color: #004a99;
+    }
+    section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    section h2 {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: #003366;
+      margin: 0 0 10px;
+      border-bottom: 2px solid #80aaff;
+      padding-bottom: 4px;
+      user-select: none;
+    }
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #d1d9e6;
+      border-radius: 8px;
+      background-color: #f7faff;
+      box-shadow: inset 0 2px 5px rgba(0,0,0,0.03);
+    }
+    li {
+      padding: 14px 16px;
+      border-bottom: 1px solid #dde6f3;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.05rem;
+      color: #00264d;
+    }
+    li:last-child {
+      border-bottom: none;
+    }
+    li button {
+      background-color: #cc3300;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    li button:hover {
+      background-color: #991f00;
+    }
+    .message {
+      text-align: center;
+      font-size: 1rem;
+      color: #666;
+      padding: 16px 0;
+      user-select: none;
+    }
+    
+    ul::-webkit-scrollbar {
+      width: 8px;
+    }
+    ul::-webkit-scrollbar-track {
+      background: #f0f4ff;
+      border-radius: 8px;
+    }
+    ul::-webkit-scrollbar-thumb {
+      background: #a0b9ff;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <main role="main" aria-labelledby="title">
+    <h1 id="title">📚 Biblioteca Virtual Profesional</h1>
+
+    <section aria-label="Formulario para solicitar préstamo">
+      <label for="libroInput">Nombre del libro:</label>
+      <input type="text" id="libroInput" aria-describedby="errorMsg" placeholder="Ejemplo: Cien años de soledad" />
+      <button id="prestarBtn" disabled>Pedir préstamo</button>
+      <div id="errorMsg" class="message" role="alert" aria-live="assertive"></div>
+    </section>
+
+    <section aria-label="Libros prestados">
+      <h2>Libros Prestados</h2>
+      <ul id="listaPrestamos" aria-live="polite" aria-relevant="additions removals">
+        <li class="message">No hay libros prestados.</li>
+      </ul>
+    </section>
+
+    <section aria-label="Historial de préstamos y devoluciones">
+      <h2>Historial</h2>
+      <ul id="listaHistorial" aria-live="polite" aria-relevant="additions">
+        <li class="message">Aún no hay historial.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const prestamos = [];
+      const historial = [];
+
+      const libroInput = document.getElementById('libroInput');
+      const prestarBtn = document.getElementById('prestarBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      const listaPrestamos = document.getElementById('listaPrestamos');
+      const listaHistorial = document.getElementById('listaHistorial');
+
+      function actualizarBoton() {
+        prestarBtn.disabled = libroInput.value.trim() === '';
+        errorMsg.textContent = '';
+      }
+
+      function mostrarError(mensaje) {
+        errorMsg.textContent = mensaje;
+      }
+
+      function prestarLibro() {
+        const libro = libroInput.value.trim();
+
+        if (!libro) {
+          mostrarError('Por favor, escribe el nombre del libro.');
+          return;
+        }
+        if (prestamos.includes(libro)) {
+          mostrarError('Este libro ya está prestado.');
+          return;
+        }
+
+        prestamos.push(libro);
+        historial.push(`📘 Se prestó: ${libro}`);
+        libroInput.value = '';
+        actualizarBoton();
+        actualizarVista();
+      }
+
+      function devolverLibro(index) {
+        const libroDevuelto = prestamos.splice(index, 1)[0];
+        historial.push(`✅ Se devolvió: ${libroDevuelto}`);
+        actualizarVista();
+      }
+
+      function actualizarVista() {
+    
+        listaPrestamos.innerHTML = '';
+        if (prestamos.length === 0) {
+          listaPrestamos.innerHTML = '<li class="message">No hay libros prestados.</li>';
+        } else {
+          prestamos.forEach((libro, i) => {
+            const li = document.createElement('li');
+            li.textContent = libro;
+
+            const btn = document.createElement('button');
+            btn.textContent = 'Devolver';
+            btn.setAttribute('aria-label', `Devolver libro ${libro}`);
+            btn.addEventListener('click', () => devolverLibro(i));
+
+            li.appendChild(btn);
+            listaPrestamos.appendChild(li);
+          });
+        }
+
+        
+        listaHistorial.innerHTML = '';
+        if (historial.length === 0) {
+          listaHistorial.innerHTML = '<li class="message">Aún no hay historial.</li>';
+        } else {
+          historial.slice().reverse().forEach(evento => {
+            const li = document.createElement('li');
+            li.textContent = evento;
+            listaHistorial.appendChild(li);
+          });
+        }
+      }
+
+      libroInput.addEventListener('input', actualizarBoton);
+      prestarBtn.addEventListener('click', prestarLibro);
+
+      actualizarBoton();
+      actualizarVista();
+    })();
+  </script>
+</body>
+</html>
